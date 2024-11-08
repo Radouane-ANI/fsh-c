@@ -3,6 +3,11 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 #include <string.h>
+#include "header.h"
+#include <unistd.h>
+
+#define BUFF 1024
+char prev_dir[BUFF];
 
 char **separer_chaine(char *ligne)
 {
@@ -35,6 +40,52 @@ char **separer_chaine(char *ligne)
     return result;
 }
 
+int cd(char **cmd)
+{
+    char *home_dir = getenv("HOME");
+    char current_dir[BUFF];
+
+    if (getcwd(current_dir, sizeof(current_dir)) == NULL)
+    {
+        perror("getcwd");
+        return -1;
+    }
+
+    if (cmd[1] == NULL)
+    {
+        if (chdir(home_dir) != 0)
+        {
+            perror("cd home");
+            return -1;
+        }
+    }
+    else if (strcmp(cmd[1], "-") == 0)
+    {
+        if (prev_dir[0] == '\0')
+        {
+            fprintf(stderr, "cd: OLDPWD not set\n");
+            return -1;
+        }
+        if (chdir(prev_dir) != 0)
+        {
+            perror("cd -");
+            return -1;
+        }
+        printf("%s\n", prev_dir);
+    }
+    else
+    {
+        if (chdir(cmd[1]) != 0)
+        {
+            perror("cd");
+            return -1;
+        }
+    }
+
+    strncpy(prev_dir, current_dir, sizeof(prev_dir));
+    return 0;
+}
+
 int execute_cmd_interne(char **cmd)
 {
     if (!strcmp(cmd[0], "pwd"))
@@ -44,6 +95,7 @@ int execute_cmd_interne(char **cmd)
     if (!strcmp(cmd[0], "cd"))
     {
         /* appelle cd, return valeur de retour*/
+		return cd(cmd);
     }
     if (!strcmp(cmd[0], "ftype"))
     {
@@ -64,6 +116,7 @@ int main(void)
         int valeur_retour = 0;
 
         char *ligne = readline("mon joli prompt $ ");
+
         if (ligne == NULL)
         {
             return valeur_retour;
@@ -86,7 +139,11 @@ int main(void)
             free(ligne);
             return valeur_retour;
         }
-
+	/*
+	char curr[BUFF];
+	getcwd(curr, sizeof(curr));
+	printf("%s\n", curr);
+	*/
         valeur_retour = execute_cmd_interne(mots);
         if (valeur_retour == -1)
         {
