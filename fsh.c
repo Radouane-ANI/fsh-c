@@ -4,8 +4,9 @@
 #include <readline/history.h>
 #include <string.h>
 #include "header.h"
+#include <unistd.h>
 
-#define BUFF 1024;
+#define BUFF 1024
 char prev_dir[BUFF];
 
 char **separer_chaine(char *ligne)
@@ -85,7 +86,6 @@ int cd(char **cmd)
     return 0;
 }
 
-
 int execute_cmd_interne(char **cmd)
 {
     if (!strcmp(cmd[0], "pwd"))
@@ -116,6 +116,7 @@ int main(void)
         int valeur_retour = 0;
 
         char *ligne = readline("mon joli prompt $ ");
+
         if (ligne == NULL)
         {
             return valeur_retour;
@@ -138,7 +139,11 @@ int main(void)
             free(ligne);
             return valeur_retour;
         }
-
+	/*
+	char curr[BUFF];
+	getcwd(curr, sizeof(curr));
+	printf("%s\n", curr);
+	*/
         valeur_retour = execute_cmd_interne(mots);
         if (valeur_retour == -1)
         {
