@@ -11,21 +11,29 @@ char prev_dir[BUFF];
 
 char **separer_chaine(char *ligne)
 {
-    int taille = 100;
+    char *cpyligne = malloc(strlen(ligne) + 1);
+    if (cpyligne == NULL)
+    {
+        perror("malloc 1 dans separer_chaine");
+        exit(-1);
+    }
+    strcpy(cpyligne, ligne);
+
+    int taille = 10;
     char **result = malloc(taille * sizeof(char *));
     if (result == NULL)
     {
-        perror("malloc dans separer_chaine");
+        perror("malloc 2 dans separer_chaine");
         exit(-1);
     }
 
     int i = 0;
-
-    result[i] = strtok(ligne, " ");
+    char *saveptr;
+    result[i] = strtok_r(cpyligne, " ", &saveptr);
     while (result[i] != NULL)
     {
         i++;
-        result[i] = strtok(NULL, " ");
+        result[i] = strtok_r(NULL, " ", &saveptr);
         if (i == taille - 1)
         {
             taille *= 2;
@@ -37,6 +45,7 @@ char **separer_chaine(char *ligne)
             }
         }
     }
+    free(cpyligne);
     return result;
 }
 
@@ -86,7 +95,12 @@ int cd(char **cmd)
     return 0;
 }
 
-int execute_cmd_interne(char **cmd)
+int execute_cmd_externe(char **cmd)
+{
+    return 0; // renvoie la valeur de la comande externe
+}
+
+int execute_cmd(char **cmd)
 {
     if (!strcmp(cmd[0], "pwd"))
     {
@@ -95,18 +109,13 @@ int execute_cmd_interne(char **cmd)
     if (!strcmp(cmd[0], "cd"))
     {
         /* appelle cd, return valeur de retour*/
-		return cd(cmd);
+        return cd(cmd);
     }
     if (!strcmp(cmd[0], "ftype"))
     {
         /* appelle ftype, return valeur de retour*/
     }
-    return -1; // pas une commande interne
-}
-
-int execute_cmd_externe(char **cmd)
-{
-    return 0; // renvoie la valeur de la comande externe
+    return execute_cmd_externe(cmd); // pas une commande interne
 }
 
 int main(void)
@@ -129,6 +138,13 @@ int main(void)
         add_history(ligne);
 
         char **mots = separer_chaine(ligne);
+        if (mots[0] == NULL)
+        {
+            free(mots);
+            free(ligne);
+            continue;
+        }
+
         if (!strcmp(mots[0], "exit"))
         {
             if (mots[1] != NULL)
@@ -139,17 +155,12 @@ int main(void)
             free(ligne);
             return valeur_retour;
         }
-	/*
-	char curr[BUFF];
-	getcwd(curr, sizeof(curr));
-	printf("%s\n", curr);
-	*/
-        valeur_retour = execute_cmd_interne(mots);
-        if (valeur_retour == -1)
-        {
-            valeur_retour = execute_cmd_interne(mots);
-        }
-
+        /*
+        char curr[BUFF];
+        getcwd(curr, sizeof(curr));
+        printf("%s\n", curr);
+        */
+        valeur_retour = execute_cmd(mots);
         free(mots);
         free(ligne);
     }
