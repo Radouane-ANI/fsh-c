@@ -5,9 +5,20 @@
 #include <string.h>
 #include "header.h"
 #include <unistd.h>
+#include <dirent.h>
 
 #define BUFF 1024
 char prev_dir[BUFF];
+
+void free_cmd(char **cmd)
+{
+    for (int i = 0; cmd[i] != NULL; i++)
+    {
+        free(cmd[i]);
+    }
+
+    free(cmd);
+}
 
 char **separer_chaine(char *ligne)
 {
@@ -29,12 +40,19 @@ char **separer_chaine(char *ligne)
 
     int i = 0;
     char *saveptr;
-    result[i] = strtok_r(cpyligne, " ", &saveptr);
-    while (result[i] != NULL)
+    char *mot = strtok_r(cpyligne, " ", &saveptr);
+    while (mot != NULL)
     {
+        result[i] = malloc(strlen(mot) + 1);
+        if (result[i] == NULL)
+        {
+            perror("malloc pour mot dans separer_chaine");
+            exit(-1);
+        }
+        strcpy(result[i], mot);
         i++;
-        result[i] = strtok_r(NULL, " ", &saveptr);
-        if (i == taille - 1)
+
+        if (i == taille)
         {
             taille *= 2;
             result = realloc(result, taille * sizeof(char *));
@@ -44,7 +62,9 @@ char **separer_chaine(char *ligne)
                 exit(-1);
             }
         }
+        mot = strtok_r(NULL, " ", &saveptr);
     }
+    result[i] = NULL;
     free(cpyligne);
     return result;
 }
@@ -118,6 +138,90 @@ int execute_cmd(char **cmd)
     return execute_cmd_externe(cmd); // pas une commande interne
 }
 
+void remplace(char *str, const char *mot_a_remplacer, const char *mot_de_remplacement)
+{
+    char buffer[1024];
+    char *ptr = str;
+    char *position;
+    int longueur_mot = strlen(mot_a_remplacer);
+
+    buffer[0] = '\0';
+
+    while ((position = strstr(ptr, mot_a_remplacer)) != NULL)
+    {
+        strncat(buffer, ptr, position - ptr);
+        strcat(buffer, mot_de_remplacement);
+        ptr = position + longueur_mot;
+    }
+
+    strcat(buffer, ptr);
+    strcpy(str, buffer);
+}
+
+int checkfor(char *ligne)
+{
+    int valeur_retour = 0;
+    char c;
+    char cmd[BUFF];
+    char *rep = malloc(BUFF * sizeof(char));
+    if (rep == NULL)
+    {
+        perror("malloc");
+        exit(1);
+    }
+    int match = sscanf(ligne, "for %c in %[^ ] { %[^}]", &c, rep, cmd);
+    if (match != 3)
+    {
+        free(rep);
+        return -1;
+    }
+    struct dirent *entry;
+    DIR *dirp = opendir(rep);
+    if (dirp == NULL)
+    {
+        free(rep);
+        perror("opendir");
+        exit(1);
+    }
+    char ref[BUFF];
+    char *remplacer = strchr(cmd, c);
+    while ((entry = readdir(dirp)))
+    {
+        if (entry->d_name[0] != '.')
+        {
+            char cmd_temp[BUFF];
+            strcpy(cmd_temp, cmd);
+
+            if (remplacer != NULL)
+            {
+                char dollarc[3] = "$";
+                dollarc[1] = c;
+                dollarc[2] = '\0';
+                snprintf(ref, BUFF, "%s/%s", rep, entry->d_name);
+                remplace(cmd_temp, dollarc, ref);
+            }
+            char **mots = separer_chaine(cmd_temp);
+            if (mots[0] == NULL)
+            {
+                free_cmd(mots);
+                continue;
+            }
+
+            int val = execute_cmd(mots);
+            if (val > valeur_retour)
+            {
+                valeur_retour = val;
+            }
+
+            free(mots);
+        }
+    }
+    closedir(dirp);
+
+    free(rep);
+    return valeur_retour;
+}
+
 int main(void)
 {
     while (1)
@@ -137,10 +241,18 @@ int main(void)
         }
         add_history(ligne);
 
+        int val = checkfor(ligne);
+        if (val != -1)
+        {
+            valeur_retour = val;
+            free(ligne);
+            continue;
+        }
+
         char **mots = separer_chaine(ligne);
         if (mots[0] == NULL)
         {
-            free(mots);
+            free_cmd(mots);
             free(ligne);
             continue;
         }
@@ -151,7 +263,7 @@ int main(void)
             {
                 valeur_retour = atoi(mots[1]);
             }
-            free(mots);
+            free_cmd(mots);
             free(ligne);
             return valeur_retour;
         }
@@ -161,7 +273,7 @@ int main(void)
         printf("%s\n", curr);
         */
         valeur_retour = execute_cmd(mots);
-        free(mots);
+        free_cmd(mots);
         free(ligne);
     }
 }
