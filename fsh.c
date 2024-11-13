@@ -6,7 +6,8 @@
 #include <signal.h>
 #include "header.h"
 #include <unistd.h>
-#include <sys/stat.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 
 #define BUFF 1024
 char prev_dir[BUFF];
@@ -78,7 +79,6 @@ int cd(char **cmd)
             perror("cd -");
             return -1;
         }
-        printf("%s\n", prev_dir);
     }
     else
     {
@@ -157,7 +157,28 @@ int execute_cmd_interne(char **cmd)
 
 int execute_cmd_externe(char **cmd)
 {
-    return 0; // renvoie la valeur de la comande externe
+    pid_t pid = fork();
+    if (pid == -1)
+    {
+        perror("fork");
+    }
+    else if (pid == 0)
+    {
+        if (execvp(cmd[0], cmd) == -1)
+        {
+            perror("execvp");
+            return -1;
+        }
+    }
+    else
+    {
+        if (waitpid(pid, NULL, 0) == -1)
+        {
+            perror("waitpid");
+            return -1;
+        }
+    }
+    return 0;
 }
 void setup_signals() {
         struct sigaction sa;
@@ -247,7 +268,7 @@ int main(void)
         valeur_retour = execute_cmd_interne(mots);
         if (valeur_retour == -1)
         {
-            valeur_retour = execute_cmd_interne(mots);
+            valeur_retour = execute_cmd_externe(mots);
         }
 
         free(mots);
