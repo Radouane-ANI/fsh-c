@@ -73,7 +73,6 @@ int cd(char **cmd)
             perror("cd -");
             return -1;
         }
-        printf("%s\n", prev_dir);
     }
     else
     {
@@ -108,7 +107,7 @@ int execute_cmd_interne(char **cmd)
 
 int execute_cmd_externe(char **cmd)
 {
-        pid_t pid = fork();
+    pid_t pid = fork();
     if (pid == -1)
     {
         perror("fork");
