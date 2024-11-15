@@ -172,22 +172,33 @@ int execute_cmd_externe(char **cmd)
     if (pid == -1)
     {
         perror("fork");
+        return 1;
     }
-    else if (pid == 0)
+    if (pid == 0)
     {
         if (execvp(cmd[0], cmd) == -1)
         {
             perror("execvp");
-            return 1;
+            exit(1);
         }
     }
     else
     {
-        if (waitpid(pid, NULL, 0) == -1)
+        int res;
+        if (waitpid(pid, &res, 0) == -1)
         {
             perror("waitpid");
             return 1;
         }
+        if (WIFEXITED(res))
+        {
+            return WEXITSTATUS(res);
+        }
+        else
+        {
+            return 1;
+        }
+
     }
     return 0;
 }
@@ -310,6 +321,7 @@ int main(void)
 {
     int valeur_retour = 0;
     setup_signals();
+    rl_outstream = stderr;
     while (1)
     {
         char *color_status;
