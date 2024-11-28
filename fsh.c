@@ -48,11 +48,6 @@ int loop()
             free(ligne);
             return valeur_retour;
         }
-        /*
-        char curr[BUFF];
-        getcwd(curr, sizeof(curr));
-        printf("%s\n", curr);
-        */
         valeur_retour = execute_cmd(mots);
         free_cmd(mots);
         free(ligne);

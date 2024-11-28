@@ -25,7 +25,7 @@ int static cd(char **cmd)
     {
         if (prev_dir[0] == '\0')
         {
-            fprintf(stderr, "cd: OLDPWD not set\n");
+            write(1, "cd: OLDPWD not set\n",19);
             return 1;
         }
         if (chdir(prev_dir) != 0)
@@ -55,7 +55,8 @@ int static pwd(char **cmd)
         perror("getcwd");
         return 1;
     }
-    printf("%s\n", current_dir);
+    write(1, current_dir, strlen(current_dir));
+    write(1, "\n", 1);
     return 0;
 }
 
@@ -69,23 +70,23 @@ int static ftype(char **cmd)
     }
     else if (S_ISREG(buf.st_mode))
     {
-        printf("regular file\n");
+        write(1,"regular file\n",13);
     }
     else if (S_ISDIR(buf.st_mode))
     {
-        printf("directory\n");
+        write(1,"directory\n",10);
     }
     else if (S_ISFIFO(buf.st_mode))
     {
-        printf("named pipe\n");
+        write(1,"named pipe\n",11);
     }
     else if (S_ISLNK(buf.st_mode))
     {
-        printf("symbolic link\n");
+        write(1,"symbolic link\n",14);
     }
     else
     {
-        printf("other\n");
+        write(1,"other\n",6);
     }
     return 0;
 }
