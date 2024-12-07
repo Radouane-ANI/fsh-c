@@ -10,7 +10,7 @@ char **separer_chaine(char *ligne)
     }
     strcpy(cpyligne, ligne);
 
-    int taille = 10;
+    int taille = 100;
     char **result = malloc(taille * sizeof(char *));
     if (result == NULL)
     {

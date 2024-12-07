@@ -93,6 +93,11 @@ int static ftype(char **cmd)
 
 int execute_cmd(char **cmd)
 {
+    int val = checkfor(cmd);
+    if (val != -1)
+    {
+        return val;
+    }
     if (!strcmp(cmd[0], "pwd"))
     {
         /* appelle pwd, return valeur de retour*/

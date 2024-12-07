@@ -22,14 +22,6 @@ int loop()
         }
         add_history(ligne);
 
-        int val = checkfor(ligne);
-        if (val != -1)
-        {
-            valeur_retour = val;
-            free(ligne);
-            continue;
-        }
-
         char **mots = separer_chaine(ligne);
         if (mots[0] == NULL)
         {
