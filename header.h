@@ -24,6 +24,7 @@ int execute_cmd(char **cmd);
 int execute_cmd_externe(char **cmd);
 int execute_cmd_externe(char **cmd);
 int checkfor(char **boucle);
+int checkif(char **condition);
 char **separer_chaine(char *ligne);
 void setup_signals();
 int setup_prompt(int valeur_retour);

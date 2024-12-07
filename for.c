@@ -24,8 +24,21 @@ char *reconstruit(char **ligne)
 {
     int total_length = 0;
     int count = 0;
+    int nb_accolade = 1;
     for (int i = 0; ligne[i] != NULL; i++)
     {
+        if (strcmp(ligne[i], "{") == 0)
+        {
+            nb_accolade++;
+        }
+        else if (strcmp(ligne[i], "}") == 0)
+        {
+            nb_accolade--;
+            if (nb_accolade == 0)
+            {
+                break;
+            }
+        }
         total_length += strlen(ligne[i]);
         count++;
     }
@@ -36,14 +49,22 @@ char *reconstruit(char **ligne)
     {
         exit(EXIT_FAILURE);
     }
-
+    nb_accolade = 1;
     result[0] = '\0';
     for (int i = 0; ligne[i] != NULL; i++)
     {
-        if (!strcmp(ligne[i], "}") && ligne[i + 1] == NULL)
+        if (strcmp(ligne[i], "{") == 0)
         {
-            strcat(result, "\0");
-            break;
+            nb_accolade++;
+        }
+        else if (strcmp(ligne[i], "}") == 0)
+        {
+            nb_accolade--;
+            if (nb_accolade == 0)
+            {
+                strcat(result, "\0");
+                break;
+            }
         }
         strcat(result, ligne[i]);
         if (ligne[i + 1] != NULL)

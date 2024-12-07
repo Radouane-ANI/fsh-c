@@ -98,6 +98,11 @@ int execute_cmd(char **cmd)
     {
         return val;
     }
+    val = checkif(cmd);
+    if (val != -1)
+    {
+        return val;
+    }
     if (!strcmp(cmd[0], "pwd"))
     {
         /* appelle pwd, return valeur de retour*/
