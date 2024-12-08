@@ -20,7 +20,7 @@ int setup_prompt(int valeur_retour)
         }
 
         size_t max_display_length = signal_recu ? 23 : 25;
-
+        if (valeur_retour ==255) max_display_length =23
         size_t pwd_len = strlen(pwd);
         if (pwd_len > max_display_length)
         {
