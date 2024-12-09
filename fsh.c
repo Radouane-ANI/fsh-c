@@ -42,7 +42,18 @@ int loop()
         {
             if (mots[1] != NULL)
             {
-                valeur_retour = atoi(mots[1]);
+                if (mots[2] != NULL)
+                {
+                    write(2, "exit: too many arguments\n", 26);
+                    valeur_retour = 1;
+                    free_cmd(mots);
+                    free(ligne);
+                    continue;
+                }
+                else
+                {
+                    valeur_retour = atoi(mots[1]);
+                }
             }
             free_cmd(mots);
             free(ligne);

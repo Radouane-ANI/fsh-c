@@ -21,6 +21,11 @@ int static cd(char **cmd)
             return 1;
         }
     }
+    else if (cmd[2] != NULL)
+    {
+        write(2, "cd: too many arguments\n", 24);
+        return 1;
+    }
     else if (strcmp(cmd[1], "-") == 0)
     {
         if (prev_dir[0] == '\0')
@@ -49,6 +54,11 @@ int static cd(char **cmd)
 
 int static pwd(char **cmd)
 {
+    if (cmd[1] != NULL)
+    {
+        write(2, "pwd: invalid argument\n", 23);
+        return 1;
+    }
     char current_dir[BUFF];
     if (getcwd(current_dir, sizeof(current_dir)) == NULL)
     {
@@ -63,6 +73,11 @@ int static pwd(char **cmd)
 int static ftype(char **cmd)
 {
     struct stat buf;
+    if (cmd[2] != NULL)
+    {
+        write(2, "ftype: too many arguments\n", 27);
+        return 1;
+    }
     if (lstat(cmd[1], &buf) == -1)
     {
         perror("stat");
