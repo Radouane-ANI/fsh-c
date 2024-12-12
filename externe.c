@@ -10,6 +10,9 @@ int execute_cmd_externe(char **cmd)
     }
     if (pid == 0)
     {
+        if (redirection(cmd) == 1) {
+            exit(1);
+        }
         if (execvp(cmd[0], cmd) == -1)
         {
             perror("execvp");
