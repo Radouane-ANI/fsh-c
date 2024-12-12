@@ -9,7 +9,7 @@ int setup_prompt(int valeur_retour)
 
         char pwd[BUFF];
         char display_pwd[26]; // 25 chars + null terminator
-        size_t max_display_length
+        size_t max_display_length;
 
         color_status = (valeur_retour == 0) ? "\001\033[32m\002" : "\001\033[91m\002";
         color_prompt = "\001\033[34m\002"; // bleu par défaut
