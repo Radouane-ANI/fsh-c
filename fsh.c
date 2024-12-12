@@ -42,8 +42,23 @@ int loop()
         {
             if (mots[1] != NULL)
             {
-                if (mots[2] != NULL)
+               if (mots[2] != NULL)
                 {
+                    int test = redirection(mots);
+                    if (test == 0)
+                    {
+                        valeur_retour = 0;
+                        free_cmd(mots);
+                        free(ligne);
+                        return valeur_retour;
+                    }
+                    else if (test == 1)
+                    {
+                        valeur_retour = 1;
+                        free_cmd(mots);
+                        free(ligne);
+                        return valeur_retour;
+                    }
                     write(2, "exit: too many arguments\n", 26);
                     valeur_retour = 1;
                     free_cmd(mots);
@@ -64,3 +79,4 @@ int loop()
         free(ligne);
     }
 }
+

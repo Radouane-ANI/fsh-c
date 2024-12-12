@@ -14,7 +14,7 @@ LIBS = -lreadline
 
 # Fichiers sources et objets
 SRC = fsh.c interne.c externe.c for.c split.c\
-	free.c signal.c prompt.c main.c
+	free.c signal.c redirection.c prompt.c main.c
 OBJ = $(SRC:.c=.o)
 
 # Règle par défaut : compiler l'exécutable
