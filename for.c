@@ -77,12 +77,18 @@ char *reconstruit(char **ligne)
 
 int parcours_rep(char c, char *cmd, char *rep, int option_A, int option_r, char *option_e, char option_t, int option_p)
 {
+    // printf("%s\n", cmd);
+    // printf("rep : %s\n", rep);
+    // printf("opa %d\n", option_A);
+    // printf("opr %d\n", option_r);
+    // printf("ope %s\n", option_e);
+    // printf("opt %c\n", option_t);
+
     int valeur_retour = 0;
     struct dirent *entry;
     DIR *dirp = opendir(rep);
     if (dirp == NULL)
     {
-        free(cmd);
         perror("opendir");
         return 1;
     }
@@ -98,29 +104,16 @@ int parcours_rep(char c, char *cmd, char *rep, int option_A, int option_r, char 
         if (entry->d_name[0] != '.' || option_A)
         {
             snprintf(ref, BUFF, "%s/%s", rep, entry->d_name);
-            // Filtrage par extension (-e EXT)
-            if (option_e != NULL)
-            {
-                size_t len_name = strlen(entry->d_name);
-                size_t len_ext = strlen(option_e);
-                if (len_name < len_ext || strcmp(entry->d_name + len_name - len_ext, option_e) != 0)
-                {
-                    continue;
-                }
-                ref[strlen(ref) - len_ext - 1] = '\0';
-            }
 
-            char cmd_temp[BUFF];
-            strcpy(cmd_temp, cmd);
+            // printf("Fichiers dans le répertoire %s:\n", rep);
+            // struct dirent *ent;
+            // while ((ent = readdir(dirp)) != NULL)
+            // {
+            //     printf("%s\n", ent->d_name);
+            // }printf("FIN.\n");
 
-            if (remplacer != NULL)
-            {
-                char dollarc[3] = "$";
-                dollarc[1] = c;
-                dollarc[2] = '\0';
-                remplace(cmd_temp, dollarc, ref);
-            }
             struct stat st;
+            // printf("lien : %s\n", ref);
             if (lstat(ref, &st) != 0)
             {
                 perror("stat");
@@ -133,6 +126,32 @@ int parcours_rep(char c, char *cmd, char *rep, int option_A, int option_r, char 
                 (option_t == 'p' && !S_ISFIFO(st.st_mode)))
             {
                 continue;
+            }
+
+            // Filtrage par extension (-e EXT)
+            if (option_e != NULL)
+            {
+                size_t len_name = strlen(entry->d_name);
+                size_t len_ext = strlen(option_e);
+                if (len_name < len_ext || strcmp(entry->d_name + len_name - len_ext, option_e) != 0)
+                {
+                    continue;
+                }
+                if (entry->d_name[len_name - len_ext - 1] != '.')
+                {
+                    continue;
+                }
+                ref[strlen(ref) - len_ext - 1] = '\0';
+            }
+            char cmd_temp[BUFF];
+            strcpy(cmd_temp, cmd);
+
+            if (remplacer != NULL)
+            {
+                char dollarc[3] = "$";
+                dollarc[1] = c;
+                dollarc[2] = '\0';
+                remplace(cmd_temp, dollarc, ref);
             }
 
             char **mots = separer_chaine(cmd_temp);
