@@ -42,12 +42,12 @@ char *reconstruit(char **ligne)
         total_length += strlen(ligne[i]);
         count++;
     }
-    total_length += (count - 1);
+    total_length += count + 1;
 
     char *result = (char *)malloc((total_length + 1) * sizeof(char));
     if (!result)
     {
-        exit(EXIT_FAILURE);
+        return NULL;
     }
     nb_accolade = 1;
     result[0] = '\0';
@@ -62,7 +62,6 @@ char *reconstruit(char **ligne)
             nb_accolade--;
             if (nb_accolade == 0)
             {
-                strcat(result, "\0");
                 break;
             }
         }
@@ -77,12 +76,6 @@ char *reconstruit(char **ligne)
 
 int parcours_rep(char c, char *cmd, char *rep, int option_A, int option_r, char *option_e, char option_t, int option_p)
 {
-    // printf("%s\n", cmd);
-    // printf("rep : %s\n", rep);
-    // printf("opa %d\n", option_A);
-    // printf("opr %d\n", option_r);
-    // printf("ope %s\n", option_e);
-    // printf("opt %c\n", option_t);
     int exe_cmd = 1;
     int val;
     int valeur_retour = 0;
@@ -97,6 +90,7 @@ int parcours_rep(char c, char *cmd, char *rep, int option_A, int option_r, char 
     char *remplacer = strchr(cmd, c);
     while ((entry = readdir(dirp)))
     {
+        exe_cmd = 1;
         if (!strcmp(entry->d_name, ".") || !strcmp(entry->d_name, ".."))
         {
             continue;
@@ -106,19 +100,11 @@ int parcours_rep(char c, char *cmd, char *rep, int option_A, int option_r, char 
         {
             snprintf(ref, BUFF, "%s/%s", rep, entry->d_name);
 
-            // printf("Fichiers dans le répertoire %s:\n", rep);
-            // struct dirent *ent;
-            // while ((ent = readdir(dirp)) != NULL)
-            // {
-            //     printf("%s\n", ent->d_name);
-            // }printf("FIN.\n");
-
             struct stat st;
-            // printf("lien : %s\n", ref);
             if (lstat(ref, &st) != 0)
             {
                 perror("stat");
-                return -1;
+                return 1;
             }
             // Filtrage par type (-t TYPE)
             if ((option_t == 'f' && !S_ISREG(st.st_mode)) ||
@@ -205,19 +191,23 @@ int checkfor(char **boucle)
     {
         return -1;
     }
-    if (strcmp(boucle[0], "for") || strcmp(boucle[2], "in"))
+    if (strcmp(boucle[0], "for"))
     {
         return -1;
     }
 
-    if (boucle[1] != NULL && boucle[3] != NULL)
+    if (boucle[1] != NULL && boucle[3] != NULL && strcmp(boucle[3], "{") != 0)
     {
         c = boucle[1][0];
         rep = boucle[3];
     }
     else
     {
-        return -1;
+        return 2;
+    }
+    if (strcmp(boucle[2], "in"))
+    {
+        return 2;
     }
 
     for (int i = 4; boucle[i] != NULL; i++)
@@ -245,13 +235,22 @@ int checkfor(char **boucle)
         else if (!strcmp(boucle[i], "{") && boucle[i + 1] != NULL)
         {
             cmd = reconstruit(boucle + i + 1);
+            if (cmd == NULL)
+            {
+                return 1;
+            }
+
             break;
+        }
+        else
+        {
+            return 1;
         }
     }
 
     if (cmd[0] == '\0')
     {
-        return -1;
+        return 0;
     }
     int val = parcours_rep(c, cmd, rep, option_A, option_r, option_e, option_t, option_p);
     free(cmd);

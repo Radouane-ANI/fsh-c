@@ -1,6 +1,39 @@
 #include "header.h"
 #include <string.h>
 
+char **copie(char **source, size_t nombre_chaines)
+{
+    char **destination = (char **)malloc((nombre_chaines + 1) * sizeof(char *));
+    if (destination == NULL)
+    {
+        perror("Erreur d'allocation mémoire pour le tableau");
+        return NULL;
+    }
+
+    for (size_t i = 0; i < nombre_chaines; i++)
+    {
+        size_t longueur_chaine = strlen(source[i]) + 1;
+        destination[i] = (char *)malloc(longueur_chaine * sizeof(char));
+
+        if (destination[i] == NULL)
+        {
+            perror("Erreur d'allocation mémoire pour la chaîne");
+            for (size_t j = 0; j < i; j++)
+            {
+                free(destination[j]);
+            }
+            free(destination);
+            return NULL;
+        }
+
+        strcpy(destination[i], source[i]);
+    }
+
+    destination[nombre_chaines] = NULL;
+
+    return destination;
+}
+
 int checkif(char **condition)
 {
     if (condition == NULL || condition[0] == NULL)
@@ -21,12 +54,16 @@ int checkif(char **condition)
 
     if (condition[indice] == NULL)
     {
-        return -1;
+        return 2;
     }
 
-    condition[indice] = NULL;
-
-    int test = execute_cmd(condition + 1);
+    char **cmd_test = copie(condition + 1, indice - 1);
+    if (cmd_test == NULL)
+    {
+        return 1;
+    }
+    int test = execute_cmd(cmd_test);
+    free_cmd(cmd_test);
     int val_retour = 0;
     int debut;
 
@@ -52,15 +89,23 @@ int checkif(char **condition)
                 }
             }
         }
-
-        if (condition[indice] == NULL || condition[indice + 1] == NULL || strcmp(condition[indice + 1], "else") != 0)
+        if (condition[indice] == NULL || condition[indice + 1] == NULL)
         {
             return val_retour;
         }
 
         debut = indice + 3;
+        if (strcmp(condition[indice + 1], "else") != 0)
+        {
+            return 2;
+        }
+        if (strcmp(condition[indice + 2], "{") != 0)
+        {
+            return 2;
+        }
     }
 
+    int fin;
     int nb_accolade = 1;
     indice = debut;
     while (condition[indice] != NULL)
@@ -74,14 +119,21 @@ int checkif(char **condition)
             nb_accolade--;
             if (nb_accolade == 0)
             {
-                condition[indice] = NULL;
+                fin = indice;
                 break;
             }
         }
         indice++;
     }
+    if(condition[indice+1]!=NULL){return 2;}
+    char **copie_cmd = copie(condition + debut, fin - debut);
+    if (copie_cmd == NULL)
+    {
+        return 1;
+    }
 
-    val_retour = execute_cmd(condition + debut);
+    val_retour = execute_cmd(copie_cmd);
+    free_cmd(copie_cmd);
 
     return val_retour;
 }

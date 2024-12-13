@@ -16,6 +16,7 @@ int execute_cmd_externe(char **cmd)
         if (execvp(cmd[0], cmd) == -1)
         {
             perror("execvp");
+            free_cmd(cmd);
             exit(1);
         }
     }
