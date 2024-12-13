@@ -83,7 +83,8 @@ int parcours_rep(char c, char *cmd, char *rep, int option_A, int option_r, char 
     // printf("opr %d\n", option_r);
     // printf("ope %s\n", option_e);
     // printf("opt %c\n", option_t);
-
+    int exe_cmd = 1;
+    int val;
     int valeur_retour = 0;
     struct dirent *entry;
     DIR *dirp = opendir(rep);
@@ -125,7 +126,7 @@ int parcours_rep(char c, char *cmd, char *rep, int option_A, int option_r, char 
                 (option_t == 'l' && !S_ISLNK(st.st_mode)) ||
                 (option_t == 'p' && !S_ISFIFO(st.st_mode)))
             {
-                continue;
+                exe_cmd = 0;
             }
 
             // Filtrage par extension (-e EXT)
@@ -135,39 +136,43 @@ int parcours_rep(char c, char *cmd, char *rep, int option_A, int option_r, char 
                 size_t len_ext = strlen(option_e);
                 if (len_name < len_ext || strcmp(entry->d_name + len_name - len_ext, option_e) != 0)
                 {
-                    continue;
+                    exe_cmd = 0;
                 }
                 if (entry->d_name[len_name - len_ext - 1] != '.')
                 {
-                    continue;
+                    exe_cmd = 0;
                 }
                 ref[strlen(ref) - len_ext - 1] = '\0';
             }
-            char cmd_temp[BUFF];
-            strcpy(cmd_temp, cmd);
-
-            if (remplacer != NULL)
+            if (exe_cmd)
             {
-                char dollarc[3] = "$";
-                dollarc[1] = c;
-                dollarc[2] = '\0';
-                remplace(cmd_temp, dollarc, ref);
-            }
+                char cmd_temp[BUFF];
+                strcpy(cmd_temp, cmd);
 
-            char **mots = separer_chaine(cmd_temp);
-            if (mots[0] == NULL)
-            {
+                if (remplacer != NULL)
+                {
+                    char dollarc[3] = "$";
+                    dollarc[1] = c;
+                    dollarc[2] = '\0';
+                    remplace(cmd_temp, dollarc, ref);
+                }
+
+                char **mots = separer_chaine(cmd_temp);
+                if (mots[0] == NULL)
+                {
+                    free_cmd(mots);
+                    continue;
+                }
+
+                val = execute_cmd(mots);
+                if (val > valeur_retour)
+                {
+                    valeur_retour = val;
+                }
+
                 free_cmd(mots);
-                continue;
             }
 
-            int val = execute_cmd(mots);
-            if (val > valeur_retour)
-            {
-                valeur_retour = val;
-            }
-
-            free_cmd(mots);
             // Parcours récursif
             if (option_r && (st.st_mode & __S_IFMT) == __S_IFDIR)
             {
