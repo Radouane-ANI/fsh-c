@@ -174,6 +174,16 @@ int execute_cmd(char **cmd)
     int saved_stdin = -1, saved_stdout = -1;
 
     int result = -1;
+    int val = checkfor(cmd);
+    if (val != -1)
+    {
+        return val;
+    }
+    val = checkif(cmd);
+    if (val != -1)
+    {
+        return val;
+    }
     if (!strcmp(cmd[0], "pwd"))
     {
         result = pwd(cmd);
