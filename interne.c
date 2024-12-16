@@ -21,6 +21,11 @@ int static cd(char **cmd)
             return 1;
         }
     }
+    else if (cmd[2] != NULL)
+    {
+        write(2, "cd: too many arguments\n", 24);
+        return 1;
+    }
     else if (strcmp(cmd[1], "-") == 0)
     {
         if (prev_dir[0] == '\0')
@@ -49,19 +54,92 @@ int static cd(char **cmd)
 
 int static pwd(char **cmd)
 {
-    char current_dir[BUFF];
-    if (getcwd(current_dir, sizeof(current_dir)) == NULL)
-    {
-        perror("getcwd");
+    int saved_stdout = dup(STDOUT_FILENO);
+    int saved_stdin = dup(STDIN_FILENO);
+    int saved_stderr = dup(STDERR_FILENO);
+
+    int redir_result = redirection(cmd);
+    if (redir_result == 1) {
+        if (saved_stdout != -1) {
+            dup2(saved_stdout, STDOUT_FILENO);
+            close(saved_stdout);
+        }
+        if (saved_stdin != -1) {
+            dup2(saved_stdin, STDIN_FILENO);
+            close(saved_stdin);
+        }
+        if (saved_stderr != -1) {
+            dup2(saved_stderr, STDERR_FILENO);
+            close(saved_stderr);
+        }
         return 1;
     }
+
+    // Vérifier les arguments seulement s'il n'y a pas de redirection
+    if (redir_result == 2 && cmd[1] != NULL) {
+        write(2, "pwd: invalid argument\n", 23);
+        // Restaurer les descripteurs de fichiers d'origine
+        if (saved_stdout != -1) {
+            dup2(saved_stdout, STDOUT_FILENO);
+            close(saved_stdout);
+        }
+        if (saved_stdin != -1) {
+            dup2(saved_stdin, STDIN_FILENO);
+            close(saved_stdin);
+        }
+        if (saved_stderr != -1) {
+            dup2(saved_stderr, STDERR_FILENO);
+            close(saved_stderr);
+        }
+        return 1;
+    }
+
+    char current_dir[BUFF];
+    if (getcwd(current_dir, sizeof(current_dir)) == NULL) {
+        perror("getcwd");
+        // Restaurer les descripteurs de fichiers d'origine
+        if (saved_stdout != -1) {
+            dup2(saved_stdout, STDOUT_FILENO);
+            close(saved_stdout);
+        }
+        if (saved_stdin != -1) {
+            dup2(saved_stdin, STDIN_FILENO);
+            close(saved_stdin);
+        }
+        if (saved_stderr != -1) {
+            dup2(saved_stderr, STDERR_FILENO);
+            close(saved_stderr);
+        }
+        return 1;
+    }
+
     write(1, current_dir, strlen(current_dir));
     write(1, "\n", 1);
+
+    // Restaurer les descripteurs de fichiers d'origine
+    if (saved_stdout != -1) {
+        dup2(saved_stdout, STDOUT_FILENO);
+        close(saved_stdout);
+    }
+    if (saved_stdin != -1) {
+        dup2(saved_stdin, STDIN_FILENO);
+        close(saved_stdin);
+    }
+    if (saved_stderr != -1) {
+        dup2(saved_stderr, STDERR_FILENO);
+        close(saved_stderr);
+    }
+
     return 0;
 }
 
 int static ftype(char **cmd)
 {
+     if (cmd[2] != NULL)
+    {
+        write(2, "ftype: too many arguments\n", 27);
+        return 1;
+    }
     struct stat buf;
     if (lstat(cmd[1], &buf) == -1)
     {
@@ -93,6 +171,9 @@ int static ftype(char **cmd)
 
 int execute_cmd(char **cmd)
 {
+    int saved_stdin = -1, saved_stdout = -1;
+
+    int result = -1;
     int val = checkfor(cmd);
     if (val != -1)
     {
@@ -105,18 +186,33 @@ int execute_cmd(char **cmd)
     }
     if (!strcmp(cmd[0], "pwd"))
     {
-        /* appelle pwd, return valeur de retour*/
-        return pwd(cmd);
+        result = pwd(cmd);
     }
-    if (!strcmp(cmd[0], "cd"))
+    else if (!strcmp(cmd[0], "cd"))
     {
-        /* appelle cd, return valeur de retour*/
-        return cd(cmd);
+        result = cd(cmd);
     }
-    if (!strcmp(cmd[0], "ftype"))
+    else if (!strcmp(cmd[0], "ftype"))
     {
-        /* appelle ftype, return valeur de retour*/
-        return ftype(cmd);
+        result = ftype(cmd);
     }
-    return execute_cmd_externe(cmd); // pas une commande interne
+    else
+    {
+        result = execute_cmd_externe(cmd); // pas une commande interne
+    }
+  
+
+    // Restaurer les descripteurs de fichiers si nécessaire
+    if (saved_stdout != -1)
+    {
+        dup2(saved_stdout, STDOUT_FILENO);
+        close(saved_stdout);
+    }
+    if (saved_stdin != -1)
+    {
+        dup2(saved_stdin, STDIN_FILENO);
+        close(saved_stdin);
+    }
+
+    return result;
 }

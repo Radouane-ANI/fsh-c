@@ -125,7 +125,7 @@ int checkif(char **condition)
         }
         indice++;
     }
-    if(condition[indice+1]!=NULL){return 2;}
+    if(condition[indice+1]!=NULL && strcmp(condition[indice + 1], "else")){return 2;}
     char **copie_cmd = copie(condition + debut, fin - debut);
     if (copie_cmd == NULL)
     {
