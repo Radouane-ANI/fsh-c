@@ -100,9 +100,11 @@ int redirection(char **cmd) {
             i++;
             continue;
         }
-        for (int j = i; cmd[j] != NULL; j++) {
+        int j;
+        for (j = i; cmd[j + 2] != NULL; j++) {
             cmd[j] = cmd[j + 2];
         }
+        cmd[j] = cmd[j + 2];
         i--;
     }
     if (count == 0) {
