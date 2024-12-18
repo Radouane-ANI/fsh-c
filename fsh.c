@@ -1,8 +1,21 @@
 #include "header.h"
 
+int valeur_retour = 0;
+char **mots;
+
+void free_debut_mots()
+{
+    free_cmd(mots);
+}
+
+int getValeur_retour()
+{
+    return valeur_retour;
+}
+
 int loop()
 {
-    int valeur_retour = 0;
+    valeur_retour = 0;
     setup_signals();
     rl_outstream = stderr;
     while (1)
@@ -22,53 +35,16 @@ int loop()
         }
         add_history(ligne);
 
-        char **mots = separer_chaine(ligne);
+        mots = separer_chaine(ligne);
+        free(ligne);
+
         if (mots[0] == NULL)
         {
             free_cmd(mots);
-            free(ligne);
             continue;
         }
 
-        if (!strcmp(mots[0], "exit"))
-        {
-            if (mots[1] != NULL)
-            {
-               if (mots[2] != NULL)
-                {
-                    int test = redirection(mots);
-                    if (test == 0)
-                    {
-                        valeur_retour = 0;
-                        free_cmd(mots);
-                        free(ligne);
-                        return valeur_retour;
-                    }
-                    else if (test == 1)
-                    {
-                        valeur_retour = 1;
-                        free_cmd(mots);
-                        free(ligne);
-                        return valeur_retour;
-                    }
-                    write(2, "exit: too many arguments\n", 26);
-                    valeur_retour = 1;
-                    free_cmd(mots);
-                    free(ligne);
-                    continue;
-                }
-                else
-                {
-                    valeur_retour = atoi(mots[1]);
-                }
-            }
-            free_cmd(mots);
-            free(ligne);
-            return valeur_retour;
-        }
         valeur_retour = execute_cmd(mots);
         free_cmd(mots);
-        free(ligne);
     }
 }
-

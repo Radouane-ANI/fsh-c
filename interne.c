@@ -196,6 +196,42 @@ int execute_cmd_interne(char **cmd)
     {
         result = ftype(cmd);
     }
+    else if (!strcmp(cmd[0], "exit"))
+    {
+        if (cmd[1] != NULL)
+        {
+            if (cmd[2] != NULL)
+            {
+                int test = redirection(cmd);
+                if (test == 0)
+                {
+                    free_debut_mots();
+                    exit(0);
+                }
+                else if (test == 1)
+                {
+                    free_debut_mots();
+                    exit(1);
+                }
+                write(2, "exit: too many arguments\n", 26);
+
+                return 1;
+            }
+            else
+            {
+                char *endptr;
+                int val = strtol(cmd[1], &endptr, 10); // Conversion en base 10
+                if (*endptr != '\0')
+                {
+                    return 2;
+                }
+                exit(val);
+            }
+        }
+        free_debut_mots();
+        exit( getValeur_retour());
+    }
+
     else
     {
         result = execute_cmd_externe(cmd); // pas une commande interne

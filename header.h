@@ -31,5 +31,7 @@ int setup_prompt(int valeur_retour);
 int redirection(char **cmd);
 int loop();
 int accolade_valide(char **cmd);
+int getValeur_retour();
+void free_debut_mots();
 
 #endif
