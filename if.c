@@ -1,6 +1,26 @@
 #include "header.h"
 #include <string.h>
 
+int accolade_valide(char **cmd)
+{
+    int accolade = 0;
+    for (size_t i = 0; cmd[i] != NULL; i++)
+    {
+        if (accolade < 0)
+        {
+            return 0;
+        }
+        if (!strcmp(cmd[i], "{"))
+        {
+            accolade++;
+        }
+        if (!strcmp(cmd[i], "}"))
+        {
+            accolade--;
+        }
+    }
+    return accolade == 0;
+}
 char **copie(char **source, size_t nombre_chaines)
 {
     char **destination = (char **)malloc((nombre_chaines + 1) * sizeof(char *));
@@ -52,7 +72,7 @@ int checkif(char **condition)
         indice++;
     }
 
-    if (condition[indice] == NULL)
+    if (condition[indice] == NULL || !accolade_valide(condition))
     {
         return 2;
     }
@@ -125,7 +145,14 @@ int checkif(char **condition)
         }
         indice++;
     }
-    if(condition[indice+1]!=NULL && strcmp(condition[indice + 1], "else")){return 2;}
+    if (condition[indice + 1] != NULL && strcmp(condition[indice + 1], "else"))
+    {
+        return 2;
+    }
+    if (debut >= fin)
+    {
+        return val_retour;
+    }
     char **copie_cmd = copie(condition + debut, fin - debut);
     if (copie_cmd == NULL)
     {

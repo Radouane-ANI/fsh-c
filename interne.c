@@ -169,7 +169,7 @@ int static ftype(char **cmd)
     return 0;
 }
 
-int execute_cmd(char **cmd)
+int execute_cmd_interne(char **cmd)
 {
     int saved_stdin = -1, saved_stdout = -1;
 
@@ -196,6 +196,42 @@ int execute_cmd(char **cmd)
     {
         result = ftype(cmd);
     }
+    else if (!strcmp(cmd[0], "exit"))
+    {
+        if (cmd[1] != NULL)
+        {
+            if (cmd[2] != NULL)
+            {
+                int test = redirection(cmd);
+                if (test == 0)
+                {
+                    free_debut_mots();
+                    exit(0);
+                }
+                else if (test == 1)
+                {
+                    free_debut_mots();
+                    exit(1);
+                }
+                write(2, "exit: too many arguments\n", 26);
+
+                return 1;
+            }
+            else
+            {
+                char *endptr;
+                int val = strtol(cmd[1], &endptr, 10); // Conversion en base 10
+                if (*endptr != '\0')
+                {
+                    return 2;
+                }
+                exit(val);
+            }
+        }
+        free_debut_mots();
+        exit( getValeur_retour());
+    }
+
     else
     {
         result = execute_cmd_externe(cmd); // pas une commande interne
@@ -215,4 +251,62 @@ int execute_cmd(char **cmd)
     }
 
     return result;
+}
+
+int execute_cmd(char **cmd)
+{
+    int valeur_retour = 0;
+    int debut_cmd = 0;
+    int in_structure = 0;
+    int accolades = 0;
+    
+    for (int i = 0; cmd[i] != NULL; i++)
+    {
+        if (strcmp(cmd[i], "{") == 0)
+        {
+            in_structure = 1;
+            accolades++;
+            continue;
+        }
+        if (strcmp(cmd[i], "}") == 0)
+        {
+            accolades--;
+            if (accolades == 0)
+            {
+                in_structure = 0;
+            }
+            continue;
+        }
+        
+        if (!in_structure && strcmp(cmd[i], ";") == 0)
+        {
+            int len = i - debut_cmd;
+            char **tmp_cmd = malloc((len + 1) * sizeof(char *));
+            for (int j = 0; j < len; j++)
+            {
+                tmp_cmd[j] = strdup(cmd[debut_cmd + j]);
+            }
+            tmp_cmd[len] = NULL;
+            valeur_retour = execute_cmd_interne(tmp_cmd);
+            free_cmd(tmp_cmd);
+            debut_cmd = i + 1;
+        }
+    }
+    if (cmd[debut_cmd] != NULL)
+    {
+        int len = 0;
+        while (cmd[debut_cmd + len] != NULL) len++;
+        
+        char **tmp_cmd = malloc((len + 1) * sizeof(char *));
+        for (int j = 0; j < len; j++)
+        {
+            tmp_cmd[j] = strdup(cmd[debut_cmd + j]);
+        }
+        tmp_cmd[len] = NULL;
+        
+        valeur_retour = execute_cmd_interne(tmp_cmd);
+        
+        free_cmd(tmp_cmd);
+    }
+    return valeur_retour;
 }

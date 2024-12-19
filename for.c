@@ -196,7 +196,7 @@ int checkfor(char **boucle)
         return -1;
     }
 
-    if (boucle[1] != NULL && boucle[3] != NULL && strcmp(boucle[3], "{") != 0)
+    if (boucle[1] != NULL && boucle[3] != NULL && strcmp(boucle[3], "{") != 0 && strlen(boucle[1]) == 1)
     {
         c = boucle[1][0];
         rep = boucle[3];
@@ -205,7 +205,7 @@ int checkfor(char **boucle)
     {
         return 2;
     }
-    if (strcmp(boucle[2], "in"))
+    if (strcmp(boucle[2], "in") || !accolade_valide(boucle))
     {
         return 2;
     }
@@ -222,15 +222,28 @@ int checkfor(char **boucle)
         }
         else if (!strcmp(boucle[i], "-e") && boucle[i + 1] != NULL)
         {
+            if (!strcmp(boucle[i + 1], "{"))
+            {
+                return 2;
+            }
             option_e = boucle[++i];
         }
         else if (!strcmp(boucle[i], "-t") && boucle[i + 1] != NULL)
         {
+            if (!strcmp(boucle[i + 1], "{"))
+            {
+                return 2;
+            }
             option_t = boucle[++i][0];
         }
         else if (!strcmp(boucle[i], "-p") && boucle[i + 1] != NULL)
         {
-            option_p = atoi(boucle[++i]);
+            char *endptr;
+            option_p = strtol(boucle[++i], &endptr, 10); // Conversion en base 10
+            if (*endptr != '\0')
+            {
+                return 2;
+            }
         }
         else if (!strcmp(boucle[i], "{") && boucle[i + 1] != NULL)
         {
