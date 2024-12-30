@@ -113,8 +113,10 @@ int static pwd(char **cmd)
         return 1;
     }
 
-    write(1, current_dir, strlen(current_dir));
-    write(1, "\n", 1);
+    char result[BUFF + 2];
+    snprintf(result, BUFF + 2, "%s\n", current_dir);
+
+    write(1, result, strlen(result));
 
     // Restaurer les descripteurs de fichiers d'origine
     if (saved_stdout != -1) {
