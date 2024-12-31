@@ -169,12 +169,18 @@ int static ftype(char **cmd)
     return 0;
 }
 
+
 int execute_cmd_interne(char **cmd)
 {
     int saved_stdin = -1, saved_stdout = -1;
 
     int result = -1;
     int val = checkfor(cmd);
+    for (int i = 0; cmd[i] != NULL; i++) {
+        if (strcmp(cmd[i], "|") == 0) {
+            return execute_pipeline(cmd);
+        }
+    }
     if (val != -1)
     {
         return val;
