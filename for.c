@@ -297,9 +297,9 @@ int checkfor(char **boucle)
         for (size_t i = 0; i < option_p; i++)
         {
             int ret_fils;
-            if (waitpid(0, &ret_fils, 0) == -1)
+            if (wait(&ret_fils) == -1)
             {
-                perror("waitpid");
+                perror("wait");
                 return 1;
             }
             if (WIFEXITED(ret_fils))
