@@ -1,5 +1,7 @@
 #include "header.h"
 
+extern volatile sig_atomic_t signal_recu;
+extern volatile sig_atomic_t signal_type;
 void remplace(char *str, const char *mot_a_remplacer, const char *mot_de_remplacement)
 {
     char buffer[1024];
@@ -151,12 +153,24 @@ int parcours_rep(char c, char *cmd, char *rep, int option_A, int option_r, char 
                 }
 
                 val = execute_cmd(mots);
-                if (val > valeur_retour)
-                {
-                    valeur_retour = val;
-                }
+               free_cmd(mots);
 
-                free_cmd(mots);
+            if (signal_recu) {
+                if (signal_type == SIGINT) {
+                    closedir(dirp);
+                    return 255;
+                }
+                else if (signal_type == SIGTERM) {
+                    signal_recu = 0;
+                    signal_type = 0;
+                }
+            }
+
+            if (val > valeur_retour)
+            {
+                valeur_retour = val;
+            }
+
             }
 
             // Parcours récursif
