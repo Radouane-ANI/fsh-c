@@ -9,6 +9,7 @@
 #include <signal.h>
 #include <unistd.h>
 #include <dirent.h>
+#include <errno.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
@@ -26,6 +27,7 @@ int execute_pipeline(char **cmd);
 int checkfor(char **boucle);
 int checkif(char **condition);
 char **separer_chaine(char *ligne);
+void restore_signal_for_child(void);
 void setup_signals();
 int setup_prompt(int valeur_retour);
 int redirection(char **cmd);

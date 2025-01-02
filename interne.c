@@ -259,6 +259,10 @@ int execute_cmd_interne(char **cmd)
     return result;
 }
 
+
+extern volatile sig_atomic_t signal_recu;
+extern volatile sig_atomic_t signal_type;
+
 int execute_cmd(char **cmd)
 {
     int valeur_retour = 0;
@@ -266,51 +270,61 @@ int execute_cmd(char **cmd)
     int in_structure = 0;
     int accolades = 0;
     
-    for (int i = 0; cmd[i] != NULL; i++)
-    {
-        if (strcmp(cmd[i], "{") == 0)
-        {
+    for (int i = 0; cmd[i] != NULL; i++) {
+        if (strcmp(cmd[i], "{") == 0) {
             in_structure = 1;
             accolades++;
             continue;
         }
-        if (strcmp(cmd[i], "}") == 0)
-        {
+        if (strcmp(cmd[i], "}") == 0) {
             accolades--;
-            if (accolades == 0)
-            {
+            if (accolades == 0) {
                 in_structure = 0;
             }
             continue;
         }
         
-        if (!in_structure && strcmp(cmd[i], ";") == 0)
-        {
+        if (!in_structure && strcmp(cmd[i], ";") == 0) {
             int len = i - debut_cmd;
             char **tmp_cmd = malloc((len + 1) * sizeof(char *));
-            for (int j = 0; j < len; j++)
-            {
+            for (int j = 0; j < len; j++) {
                 tmp_cmd[j] = strdup(cmd[debut_cmd + j]);
             }
             tmp_cmd[len] = NULL;
+            
             valeur_retour = execute_cmd_interne(tmp_cmd);
+            
+            if (signal_recu && signal_type == SIGINT) {
+                free_cmd(tmp_cmd);
+                return 255;
+            }
+            
+            if (signal_recu && signal_type == SIGTERM) {
+                signal_recu = 0;
+                signal_type = 0;
+            }
+            
             free_cmd(tmp_cmd);
             debut_cmd = i + 1;
         }
     }
-    if (cmd[debut_cmd] != NULL)
-    {
+    
+    if (cmd[debut_cmd] != NULL) {
         int len = 0;
         while (cmd[debut_cmd + len] != NULL) len++;
         
         char **tmp_cmd = malloc((len + 1) * sizeof(char *));
-        for (int j = 0; j < len; j++)
-        {
+        for (int j = 0; j < len; j++) {
             tmp_cmd[j] = strdup(cmd[debut_cmd + j]);
         }
         tmp_cmd[len] = NULL;
         
         valeur_retour = execute_cmd_interne(tmp_cmd);
+        
+        if (signal_recu && signal_type == SIGINT) {
+            free_cmd(tmp_cmd);
+            return 255;
+        }
         
         free_cmd(tmp_cmd);
     }
