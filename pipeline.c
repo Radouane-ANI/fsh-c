@@ -1,6 +1,6 @@
 #include "header.h"
 
-static void cleanup_pipeline(char ***cmds, int *tubes[][2], pid_t *pids, int nb_cmds, int tubes_created)
+static void cleanup_pipeline(char ***cmds, int (*tubes)[2], pid_t *pids, int nb_cmds, int tubes_created)
 {
     for (int i = 0; i < tubes_created; i++)
     {

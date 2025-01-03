@@ -23,6 +23,7 @@ void ignore_signal(int sig);
 char **separer_chaine(char *ligne);
 int execute_cmd(char **cmd);
 int execute_cmd_externe(char **cmd);
+int execute_cmd_interne(char **cmd);
 int execute_pipeline(char **cmd);
 int checkfor(char **boucle);
 int checkif(char **condition);
