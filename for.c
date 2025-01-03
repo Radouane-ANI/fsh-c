@@ -76,8 +76,9 @@ char *reconstruit(char **ligne)
     return result;
 }
 
-int parcours_rep(char c, char *cmd, char *rep, int option_A, int option_r, char *option_e, char option_t, int option_p)
+int parcours_rep(char c, char *cmd, char *rep, int option_A, int option_r, char *option_e, char option_t, int option_p, int process_n)
 {
+    int n = 0; // indice du processus
     int exe_cmd = 1;
     int val;
     int valeur_retour = 0;
@@ -93,6 +94,15 @@ int parcours_rep(char c, char *cmd, char *rep, int option_A, int option_r, char 
     while ((entry = readdir(dirp)))
     {
         exe_cmd = 1;
+        if (option_p)
+        {
+            n = (n + 1) % option_p;
+            if (n != process_n)
+            {
+                exe_cmd = 0;
+            }
+        }
+
         if (!strcmp(entry->d_name, ".") || !strcmp(entry->d_name, ".."))
         {
             continue;
@@ -176,7 +186,7 @@ int parcours_rep(char c, char *cmd, char *rep, int option_A, int option_r, char 
             // Parcours récursif
             if (option_r && (st.st_mode & __S_IFMT) == __S_IFDIR)
             {
-                val = parcours_rep(c, cmd, ref, option_A, option_r, option_e, option_t, option_p);
+                val = parcours_rep(c, cmd, ref, option_A, option_r, option_e, option_t, option_p, process_n);
                 if (val > valeur_retour)
                 {
                     valeur_retour = val;
@@ -199,7 +209,7 @@ int checkfor(char **boucle)
     int option_r = 0;      // Parcours récursif
     char *option_e = NULL; // Extension pour le filtrage
     char option_t = 0;     // Type de fichier pour le filtrage
-    int option_p = -1;     // Limite max des fichiers
+    int option_p = 0;      // Limite max des fichiers
 
     if (boucle == NULL || boucle[0] == NULL)
     {
@@ -254,7 +264,7 @@ int checkfor(char **boucle)
         {
             char *endptr;
             option_p = strtol(boucle[++i], &endptr, 10); // Conversion en base 10
-            if (*endptr != '\0')
+            if (*endptr != '\0' || option_p < 0)
             {
                 return 2;
             }
@@ -279,7 +289,52 @@ int checkfor(char **boucle)
     {
         return 0;
     }
-    int val = parcours_rep(c, cmd, rep, option_A, option_r, option_e, option_t, option_p);
+    option_p = option_p == 0 ? 0 : option_p - 1;
+    int pere = getpid();
+    int process_n = 0;
+    for (size_t i = 0; i < option_p; i++)
+    {
+        process_n++;
+        if (fork() == 0)
+        {
+            break;
+        }
+    }
+    if (getpid() == pere)
+    {
+        process_n = 0;
+    }
+
+    int val = parcours_rep(c, cmd, rep, option_A, option_r, option_e, option_t, option_p + 1, process_n);
+    if (getpid() == pere)
+    {
+        for (size_t i = 0; i < option_p; i++)
+        {
+            int ret_fils;
+            if (wait(&ret_fils) == -1)
+            {
+                perror("wait");
+                return 1;
+            }
+            if (WIFEXITED(ret_fils))
+            {
+                ret_fils = WEXITSTATUS(ret_fils);
+            }
+            else
+            {
+                return 1;
+            }
+            if (ret_fils > val)
+            {
+                val = ret_fils;
+            }
+        }
+    }
+    else
+    {
+        free(cmd);
+        exit(val);
+    }
     free(cmd);
     return val;
 }
