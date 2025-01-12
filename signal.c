@@ -13,6 +13,8 @@ static void sigint_handler(int sig)
 static void sigterm_ignore(int sig)
 {
     (void)sig;
+    signal_recu = 1;
+    signal_type = SIGTERM;
 }
 
 void setup_signals(void)
@@ -27,6 +29,7 @@ void setup_signals(void)
     struct sigaction sa_term;
     memset(&sa_term, 0, sizeof(sa_term));
     sa_term.sa_handler = sigterm_ignore;
+    sa_term.sa_handler = SIG_IGN;  // Utiliser SIG_IGN au lieu de sigterm_ignore
     sigemptyset(&sa_term.sa_mask);
     sa_term.sa_flags = 0;
     sigaction(SIGTERM, &sa_term, NULL);
