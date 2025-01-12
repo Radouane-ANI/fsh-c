@@ -136,3 +136,53 @@ La fonction `checkif` est utilisée pour vérifier les conditions d'une structur
 
 3. **Exécution de la commande** :
    - Une fois que la condition `if` est évaluée à vrai, la commande associée est exécutée.
+
+---
+
+# Architecture des commandes structurées et pipelines
+
+## Commandes structurées
+
+Les commandes structurées permettent de regrouper plusieurs commandes les unes après les autres en les séparant par des `;` ou bien `|`. Elles peuvent être utilisées dans des blocs d'instructions ou sans.
+
+### Fonctionnement des commandes structurées : `execute_cmd`
+
+1. **Détection des `;`**
+    - On parcours le mot jusqu'à trouver un `;`. Si avant d'en trouver un on croise une accolade ouvrante
+    `{` alors on incrémente un compteur dès qu'on trouve un `{` et on le décrémente dès qu'on croise celle fermante.
+2. **Exécution des commandes**
+    - Si on croise un `;` en dehors d'un bloc d'instruction, on exécute l'instruction précédent le `;` en lui appliquant la même formule que précédement.
+    - On renvoie la valeur de retour de la dernière commande
+
+### Fonctionnement des pipelines : `execute_cmd_interne`
+
+1. **Détection des `|`**
+    - On utilise le même principe que pour les commandes structurées sauf qu'on ajoute une variable `nb_cmds` qui compte le nombre de `|` en dehors de blocs d'instructions.
+
+2. **Séparation des commandes**
+    - Allocation d'un tableau de commandes
+    - Découpage à chaque `|` hors structures
+    - Création de copies des commandese
+
+3. **Création des tubes**
+    - Un tube pour chaque paire de commandes
+    - `nb_cmd` - 1 tubes to total
+
+4. **Exécution**
+    - Fork pour chaque commande
+    - Configuration des redirections
+    - Exécution de `execute_cmd_interne`
+
+---
+
+### Ordre d'éxécution
+
+Les commandes structurées (`;`) sont séparées avant les pipelines (`|`)
+Voici la hiérarchie pour le traitement des commandes:
+
+1. **Niveau supérieur : Commandes structurées (`execute_cmd`)**
+    - Fonction appelée dès qu'on reçoit une commande
+    - Fais appelle à `execute_cmd_interne` pour chaque commandes en dehors des blocs d'instructions
+
+2. **Niveau secondaire : Pipeline (`execute_cmd_interne`)**
+    - Exécute chaque commande reçu selon le procédé cité plus haut
