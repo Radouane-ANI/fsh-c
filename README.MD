@@ -1,3 +1,5 @@
+![Logo du projet](banniere.png)
+
 # fsh (Shell Personnalisé)
 
 fsh est un interpréteur de commandes Unix développé en C, offrant une prise en charge complète des fonctionnalités essentielles d'un shell, notamment :
